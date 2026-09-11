@@ -1,11 +1,24 @@
 {
     "require-dev": {
         "squizlabs/php_codesniffer": "^2.7",
-        "wp-coding-standards/wpcs": "0.9.0"
+        "wp-coding-standards/wpcs": "0.9.0",
+        "deployer/deployer": "^7.5",
+        "wp-cli/wp-cli-bundle": "*",
+        "wp-cli/dist-archive-command": "*"
     },
     "scripts": {
         "post-autoload-dump": [
             "if [[ -d vendor/wp-coding-standards/wpcs ]]; then vendor/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs; fi"
+        ],
+        "build": [
+            "rm -rf ./build/stage-1",
+            "rm -rf ./build/orbis-twitter",
+            "rsync --recursive --verbose --exclude-from=.distignore --exclude=/vendor/ ./ ./build/stage-1/",
+            "composer install --no-dev --prefer-dist --optimize-autoloader --working-dir=./build/stage-1/",
+            "rsync --recursive --verbose --exclude-from=.distignore ./build/stage-1/ ./build/orbis-twitter/",
+            "vendor/bin/wp i18n make-pot ./build/orbis-twitter/ --slug=orbis-twitter",
+            "vendor/bin/wp i18n make-mo ./build/orbis-twitter/languages/",
+            "vendor/bin/wp dist-archive ./build/orbis-twitter/ --plugin-dirname=orbis-twitter --force"
         ]
     }
 }
